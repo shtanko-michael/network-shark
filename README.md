@@ -4,7 +4,8 @@ A desktop network inspector for Windows — like Chrome DevTools Network tab, bu
 
 Network Shark runs a local intercepting proxy that captures all HTTP and HTTPS traffic from any WinINET-based application (Chrome, Edge, Discord, Slack, etc.), decrypts it via MITM TLS, and displays it in a familiar request table with waterfall timing, full headers, payload, and response body.
 
-![Network Shark UI](network-shark/build/appicon.png)
+<img width="1611" height="889" alt="image" src="https://github.com/user-attachments/assets/c224e5e7-73d1-4e05-9fa4-66c9128db14a" />
+
 
 ---
 
