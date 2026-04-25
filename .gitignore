@@ -1,0 +1,50 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.cache/
+
+# ai
+.claude/
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+
+# Wails / local build artifacts
+network-shark/build/bin/
+network-shark/frontend/dist/
+network-shark/frontend/node_modules/
+network-shark/frontend/wailsjs/
+
+# Runtime / temp
+tmp/
+temp/
+*.tmp
