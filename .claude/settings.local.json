@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npm create *)",
+      "Bash(npx create-vite@latest . --template react)",
+      "Bash(npx create-vite@latest network-shark-app --template react)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(wails version *)",
+      "Bash(go version *)",
+      "Bash(wails init *)",
+      "Bash(go get *)",
+      "Bash(go build *)",
+      "Bash(wails dev *)",
+      "Bash(go vet *)"
+    ]
+  }
+}
