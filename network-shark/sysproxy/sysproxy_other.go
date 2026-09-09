@@ -24,12 +24,13 @@ func Set(host string, port int) error {
 }
 
 // Clear removes the system proxy setting.
-func Clear() {
+func Clear() error {
 	// macOS
 	_ = runCmd("networksetup", "-setwebproxystate", "Wi-Fi", "off")
 	_ = runCmd("networksetup", "-setsecurewebproxystate", "Wi-Fi", "off")
 	// Linux
 	_ = runCmd("gsettings", "set", "org.gnome.system.proxy", "mode", "none")
+	return nil
 }
 
 func runCmd(name string, args ...string) error {

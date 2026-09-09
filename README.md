@@ -1,6 +1,6 @@
 # Network Shark
 
-A desktop network inspector for Windows — like Chrome DevTools Network tab, but for your entire system.
+A desktop network inspector for Windows — like Chrome DevTools Network tab, for applications that use the Windows user proxy.
 
 Network Shark runs a local intercepting proxy that captures all HTTP and HTTPS traffic from any WinINET-based application (Chrome, Edge, Discord, Slack, etc.), decrypts it via MITM TLS, and displays it in a familiar request table with waterfall timing, full headers, payload, and response body.
 
@@ -11,7 +11,7 @@ Network Shark runs a local intercepting proxy that captures all HTTP and HTTPS t
 
 ## Features
 
-- **System-wide capture** — sets the Windows system proxy (WinINET) so traffic from any compatible app is intercepted, not just a single browser tab
+- **Windows user-proxy capture** — sets the WinINET proxy so traffic from compatible desktop apps is intercepted, not just a single browser tab
 - **HTTPS decryption** — generates a local CA certificate and signs per-hostname leaf certs on the fly; once the CA is trusted, all TLS traffic is readable
 - **Chrome integration** — launches Chrome (or force-restarts it) with `--proxy-server` flags so it routes through Network Shark even if Chrome normally ignores the system proxy
 - **DevTools-style UI** — request table with URL, method, status, type, size, and waterfall; click any row for a tabbed details panel (Headers / Payload / Preview / Response / Timing / Cookies)
@@ -58,6 +58,14 @@ wails build
 On first launch Network Shark generates a CA certificate at `%APPDATA%\NetworkShark\ca.crt`.  
 Click **Install CA** in the app to add it to your Windows Trusted Root store (a system dialog will appear to confirm). HTTPS decryption only works after the CA is trusted.
 
+### If no requests appear
+
+- Install the Network Shark CA to see individual HTTPS requests. Without it, Network Shark shows each HTTPS connection as an opaque `CONNECT` tunnel.
+- For Chrome, close every existing Chrome process or use the globe button in Network Shark. Proxy command-line flags only apply to a newly started browser process.
+- Windows services and applications using WinHTTP, certificate pinning, a VPN-controlled proxy, or their own networking stack may bypass the WinINET user proxy and cannot be captured by this mode.
+- On managed PCs where policy forces a machine-wide proxy, the regular Record button reports the policy conflict. The globe button still works because it starts Chrome with an explicit proxy argument.
+- If port `9876` is busy or Windows rejects the proxy change, capture now fails visibly instead of showing a misleading LIVE state.
+
 ---
 
 ## Project layout
@@ -98,7 +106,7 @@ network-shark/
 2. Plain HTTP requests are forwarded transparently; response headers and body are captured.
 3. HTTPS connections arrive as `CONNECT` tunnels. If the CA is trusted, Network Shark performs a TLS handshake on both sides (MITM), reads the decrypted HTTP/1.1 stream, and forwards it. Otherwise the tunnel is piped opaquely.
 4. Each captured request is pushed to the React frontend via the Wails event bus (`network:request` event), which appends it to the table in real time.
-5. On **Stop Capture** the proxy is shut down and the system proxy is cleared.
+5. On **Stop Capture** the proxy is shut down and the exact proxy/PAC configuration that existed before capture is restored.
 
 ---
 

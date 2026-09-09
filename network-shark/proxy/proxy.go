@@ -337,6 +337,34 @@ func (p *Proxy) handleConnect(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Without a trusted CA we can only see the CONNECT tunnel, not the HTTP
+	// requests inside it. Emit that fact immediately: browsers keep tunnels
+	// alive for minutes, so waiting for io.Copy below to finish makes a healthy
+	// capture look completely empty.
+	tunnelReadyAt := time.Now()
+	p.callback(CapturedRequest{
+		ID:        id,
+		Name:      hostname,
+		URL:       "https://" + host + "/",
+		Host:      hostname,
+		Path:      "/",
+		Method:    http.MethodConnect,
+		Type:      "other",
+		Status:    http.StatusOK,
+		Initiator: "opaque tunnel",
+		Duration:  msf(tunnelReadyAt.Sub(startAt)),
+		Timing: Timing{
+			Queue:   1,
+			Connect: msf(dialDur),
+		},
+		RequestHeaders:  map[string]string{":method": http.MethodConnect, ":authority": host},
+		ResponseHeaders: map[string]string{},
+		MimeType:        "application/octet-stream",
+		StartedAt:       float64(startAt.UnixMilli()),
+		FinishedAt:      float64(tunnelReadyAt.UnixMilli()),
+		Cookies:         []Cookie{},
+	})
+
 	// Tunnel mode: flush any buffered client data then bidirectionally pipe.
 	if n := brw.Reader.Buffered(); n > 0 {
 		b := make([]byte, n)
@@ -344,61 +372,22 @@ func (p *Proxy) handleConnect(w http.ResponseWriter, r *http.Request) {
 		_, _ = remote.Write(b)
 	}
 
-	ttfbEnd := time.Now()
-
-	// Bidirectional pipe with byte counters.
-	var (
-		toRemote   atomic.Int64
-		fromRemote atomic.Int64
-		wg         sync.WaitGroup
-	)
+	// Bidirectional pipe. The tunnel has already been reported above; its
+	// encrypted byte stream cannot be split into individual HTTP requests.
+	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		n, _ := io.Copy(remote, conn)
-		toRemote.Store(n)
+		_, _ = io.Copy(remote, conn)
 		halfClose(remote)
 	}()
 	go func() {
 		defer wg.Done()
-		n, _ := io.Copy(conn, remote)
-		fromRemote.Store(n)
+		_, _ = io.Copy(conn, remote)
 		halfClose(conn)
 	}()
 	wg.Wait()
-
-	totalDur := time.Since(startAt)
-	transferred := toRemote.Load() + fromRemote.Load()
-
-	LogCONNECT(host, transferred, totalDur)
-
-	p.callback(CapturedRequest{
-		ID:          id,
-		Name:        hostname,
-		URL:         "https://" + host + "/",
-		Host:        hostname,
-		Path:        "/",
-		Method:      "GET",
-		Type:        "fetch",
-		Status:      200,
-		Initiator:   "proxy",
-		Size:        fromRemote.Load(),
-		Transferred: transferred,
-		Duration:    msf(totalDur),
-		Timing: Timing{
-			Queue:    1,
-			Connect:  msf(dialDur),
-			SSL:      msf(ttfbEnd.Sub(startAt) - dialDur),
-			TTFB:     msf(ttfbEnd.Sub(startAt)),
-			Download: msf(totalDur - ttfbEnd.Sub(startAt)),
-		},
-		RequestHeaders:  map[string]string{":method": "CONNECT", ":authority": host},
-		ResponseHeaders: map[string]string{},
-		MimeType:        "application/octet-stream",
-		StartedAt:       float64(startAt.UnixMilli()),
-		FinishedAt:      float64(startAt.UnixMilli()) + msf(totalDur),
-		Cookies:         []Cookie{},
-	})
+	LogCONNECT(host, 0, time.Since(startAt))
 }
 
 // ---- helpers --------------------------------------------------------------

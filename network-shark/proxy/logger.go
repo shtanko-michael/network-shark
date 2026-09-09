@@ -37,7 +37,7 @@ func LogStart(port int) {
 	)
 	fmt.Printf("%s %s\n\n",
 		strings.Repeat(" ", 13),
-		ansiGray+"Configure system proxy using the ● button. Chrome will pick up the PAC automatically."+ansiReset,
+		ansiGray+"Use Record for the Windows user proxy, or launch Chrome with an explicit proxy."+ansiReset,
 	)
 }
 

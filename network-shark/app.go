@@ -46,10 +46,15 @@ func (a *App) startup(ctx context.Context) {
 }
 
 func (a *App) shutdown(_ context.Context) {
-	if a.proxy != nil && a.proxy.IsRunning() {
-		a.proxy.Stop()
-		sysproxy.Clear()
-		proxy.LogSysproxy("CLEAR", "system proxy restored")
+	if a.proxy != nil {
+		if err := sysproxy.Clear(); err != nil {
+			proxy.LogSysproxy("WARN", "could not restore system proxy: "+err.Error())
+		} else {
+			proxy.LogSysproxy("CLEAR", "previous system proxy restored")
+		}
+		if a.proxy.IsRunning() {
+			a.proxy.Stop()
+		}
 	}
 }
 
@@ -63,9 +68,10 @@ func (a *App) StartCapture() error {
 	if err := sysproxy.Set("127.0.0.1", proxyPort); err != nil {
 		runtime.LogWarningf(a.ctx, "sysproxy.Set: %v", err)
 		proxy.LogSysproxy("WARN", "could not set system proxy: "+err.Error())
-	} else {
-		proxy.LogSysproxy("SET", "ProxyServer → "+proxyAddr+" (Chrome/Edge/Discord/WinINET)")
+		a.proxy.Stop()
+		return fmt.Errorf("configure Windows system proxy: %w", err)
 	}
+	proxy.LogSysproxy("SET", "ProxyServer → "+proxyAddr+" (Chrome/Edge/Discord/WinINET)")
 	runtime.EventsEmit(a.ctx, "capture:status", map[string]any{
 		"running": true,
 		"port":    proxyPort,
@@ -74,14 +80,18 @@ func (a *App) StartCapture() error {
 }
 
 // StopCapture stops the proxy and restores the system proxy.
-func (a *App) StopCapture() {
+func (a *App) StopCapture() error {
+	if err := sysproxy.Clear(); err != nil {
+		proxy.LogSysproxy("WARN", "could not restore system proxy: "+err.Error())
+		return fmt.Errorf("restore Windows system proxy: %w", err)
+	}
 	a.proxy.Stop()
-	sysproxy.Clear()
-	proxy.LogSysproxy("CLEAR", "system proxy restored to direct")
+	proxy.LogSysproxy("CLEAR", "previous system proxy restored")
 	runtime.EventsEmit(a.ctx, "capture:status", map[string]any{
 		"running": false,
 		"port":    proxyPort,
 	})
+	return nil
 }
 
 // GetStatus returns the current capture state.
@@ -131,7 +141,7 @@ func (a *App) LaunchChrome() error {
 		return fmt.Errorf("proxy not initialized")
 	}
 	if !a.proxy.IsRunning() {
-		if err := a.StartCapture(); err != nil {
+		if err := a.startProxyForExplicitClient(); err != nil {
 			return err
 		}
 	}
@@ -144,9 +154,20 @@ func (a *App) ForceRestartChrome() error {
 		return fmt.Errorf("proxy not initialized")
 	}
 	if !a.proxy.IsRunning() {
-		if err := a.StartCapture(); err != nil {
+		if err := a.startProxyForExplicitClient(); err != nil {
 			return err
 		}
 	}
 	return forceRestartChromeWithProxy(proxyPort)
+}
+
+func (a *App) startProxyForExplicitClient() error {
+	if err := a.proxy.Start(); err != nil {
+		return err
+	}
+	runtime.EventsEmit(a.ctx, "capture:status", map[string]any{
+		"running": true,
+		"port":    proxyPort,
+	})
+	return nil
 }

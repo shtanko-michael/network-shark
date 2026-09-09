@@ -11,10 +11,10 @@ const EventsOn  = (...a) => window?.runtime?.EventsOn?.(...a)  ?? (() => {})
 const EventsOff = (...a) => window?.runtime?.EventsOff?.(...a) ?? undefined
 
 async function goStartCapture() {
-  try { return await window.go?.main?.App?.StartCapture() } catch { return null }
+  try { return await window.go?.main?.App?.StartCapture() } catch (e) { return String(e) }
 }
 async function goStopCapture() {
-  try { return await window.go?.main?.App?.StopCapture() } catch { return null }
+  try { return await window.go?.main?.App?.StopCapture() } catch (e) { return String(e) }
 }
 async function goGetStatus() {
   try { return await window.go?.main?.App?.GetStatus() } catch { return null }
@@ -127,8 +127,12 @@ export default function NetworkPanel() {
   // ---- Recording toggle ----
   const handleToggleRecord = useCallback(async () => {
     if (recording) {
-      await goStopCapture()
-      showToast('Capture stopped — system proxy restored')
+      const err = await goStopCapture()
+      if (err) {
+        showToast('Failed to stop capture: ' + err, 'error')
+        return
+      }
+      showToast('Capture stopped — previous system proxy restored')
     } else {
       if (!preserveLog) {
         await goClearCapturedRequests()
