@@ -55,6 +55,13 @@ wails dev
 wails build
 ```
 
+## Downloads
+
+Windows builds are available on the [GitHub Releases](https://github.com/shtanko-michael/network-shark/releases) page:
+
+- **Installer** — guided installation with Start menu and desktop shortcuts.
+- **Portable** — extract the ZIP and run `network-shark.exe`; no installation required.
+
 On first launch Network Shark generates a CA certificate at `%APPDATA%\NetworkShark\ca.crt`.  
 Click **Install CA** in the app to add it to your Windows Trusted Root store (a system dialog will appear to confirm). HTTPS decryption only works after the CA is trusted.
 

@@ -9,5 +9,12 @@
   "author": {
     "name": "mikhail",
     "email": "shtanko.michael@gmail.com"
+  },
+  "info": {
+    "companyName": "shtanko-michael",
+    "productName": "Network Shark",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2026 Mikhail Shtanko",
+    "comments": "Windows network traffic inspector"
   }
 }

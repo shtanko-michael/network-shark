@@ -322,7 +322,7 @@ export default function NetworkPanel() {
           <span style={{ fontSize: 12, fontWeight: 500, color: '#d4d4d8', marginLeft: 8 }}>
             Network Shark
           </span>
-          <span style={{ fontSize: 10, color: '#52525b', fontFamily: 'ui-monospace, Consolas, monospace' }}>v1.0</span>
+          <span style={{ fontSize: 10, color: '#52525b', fontFamily: 'ui-monospace, Consolas, monospace' }}>v1.0.0</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, '--wails-draggable': 'no-drag' }}>
           {recording && (
@@ -468,7 +468,7 @@ function buildHAR(requests) {
   return {
     log: {
       version: '1.2',
-      creator: { name: 'Network Shark', version: '1.0' },
+      creator: { name: 'Network Shark', version: '1.0.0' },
       entries: requests.map(r => ({
         startedDateTime: new Date(r.startedAt).toISOString(),
         time: r.duration,
